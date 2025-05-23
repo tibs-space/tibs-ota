@@ -1,9 +1,37 @@
-# tibs-ota
+# OTA System Design for STM32
 
-## Design
-This system design for STM32 uses a wifi module(esp32) to wirelessly download firmware updates. When the STM32 powers up, it checks if it has to enter normal execution or bootloader mode based on any predefined conditions. If OTA mode is selected, the STM32 enters the bootloader, initializes communication with the esp, and waits for firmware data.
+### 1. Update modes and update triggers.
+- automatic updates : the device periodically checks the server on a daily or weekly basis, or on power on.
+- manual updates : the user can manually download an update.
 
-The wifi module connects to a network, contacts our server, and checks for an update. If a new firmware version exists, it downloads the file and streams it to the STM32. The STM32 receives the firmware, stores it in flash, or a part of its memory, and verifies it via CRC. If valid, it erases the previous firmware and writes the new one. Once it is done, it boots with the updated application. If CRC verification fails, it reports an error or cancels the update.
+### 2. communication types.
 
+#### A. cellular (preffered communication type)
 
-![block diagram](./design/block.svg)
+- hardware : STM32, Cellular module, SIM card
+- software : AT parser, HTTP/MQTT/FTP/adaptive protocol selection client over cellular TCP/IP
+ 
+#### B. WiFi
+
+- hardware : STM32, WiFi module(esp32)
+- software : HTTP client
+
+#### C. BLE
+
+- hardware : STM32 with inbuilt BLE or with external Bluetooth module
+- software : GATT server/client profile
+
+### 3. Functional seperation
+
+#### A. software
+
+- bootloader : handles flash erase/write, CRC check, and application jump. 
+- application : periodically triggers OTA check or responds to external update commands. 
+- module updater logic : handles network communication, firmware download, and framing
+
+#### B. hardware
+
+- STM32
+- flash memory, internal or external
+- GPIO for manual update trigger
+- Communication module
